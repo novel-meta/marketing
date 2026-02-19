@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>UTC/KST 광고비 제너레이터 (노벨피아 다중파일 · 우선순위)</title>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+ --bg:#f5f7fb; --card:#ffffff; --line:#e4e8f0;
+ --text:#1f2937; --muted:#6b7280; --accent:#4f46e5;
+}
+body{
+ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+ background:var(--bg); padding:28px; color:var(--text);
+}
+h2{margin:0 0 6px}
+p{margin:0 0 14px;color:var(--muted);font-size:13px}
+.card{
+ background:var(--card); border:1px solid var(--line);
+ border-radius:14px; padding:20px; margin-top:18px;
+ box-shadow:0 4px 14px rgba(0,0,0,.04);
+}
+input,button{
+ width:100%; padding:11px 12px; margin-top:8px;
+ border-radius:10px; border:1px solid var(--line); font-size:14px;
+}
+button{background:var(--accent); color:#fff; font-weight:700; cursor:pointer}
+button.secondary{
+ background:#fff; color:var(--accent); border:1px dashed var(--accent);
+}
+button:hover{opacity:.93}
+
+.note{
+ background:#f1f3ff;
+ border:1px solid var(--line);
+ border-radius:10px;
+ padding:12px;
+ margin-top:10px;
+ font-size:13px;
+ color:#3730a3;
+}
+
+.wrap{display:flex; gap:14px; align-items:flex-start}
+.block{border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff;}
+.block.date{width:130px}
+.block.meta{flex:1}
+.block.metric{width:260px}
+
+table{
+ border-collapse:collapse; width:100%; font-size:13px; table-layout:fixed;
+}
+th,td{
+ border-bottom:1px solid var(--line);
+ padding:8px 10px; height:40px; line-height:24px;
+ white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+ text-align:center; vertical-align:middle;
+}
+th{background:#f3f5ff; font-weight:700}
+td.text-left{text-align:left}
+.day1{background:#ffffff}
+.day2{background:#f8f9ff}
+.sum{background:#eef2ff; font-weight:700}
+
+.section-title{font-size:15px; font-weight:700; margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<h2>UTC / KST 광고비 제너레이터</h2>
+<p>노벨피아 글로벌 시간대별 데이터 · 다중 파일 업로드</p>
+
+<div class="card">
+ <label>광고그룹 시간대별 report (CSV)</label>
+ <input type="file" id="adg" accept=".csv">
+
+ <label>PMAX 시간대별 report (CSV)</label>
+ <input type="file" id="pmax" accept=".csv">
+
+ <label>노벨피아 글로벌 시간대별 데이터 (XLSX)</label>
+ <div id="novelWrap">
+   <input type="file" class="novel" accept=".xlsx">
+ </div>
+ <button class="secondary" onclick="addNovel()">+ 글로벌 시간대 파일 추가</button>
+
+ <div class="note">
+  ▸ 노벨피아 파일이 여러 개일 경우<br>
+  ▸ <b>위에 배치된 파일일수록 우선순위가 높습니다.</b><br>
+  ▸ 동일한 <b>Date + Time of Day + Line Item</b> 조합이 겹치면<br>
+  &nbsp;&nbsp;가장 위 파일의 데이터만 반영되고, 아래 파일은 무시됩니다.
+ </div>
+
+ <button onclick="run()">집계 실행</button>
+ <p id="status"></p>
+</div>
+
+<div id="utc" class="card"></div>
+<div id="kst" class="card"></div>
+
+<script>
+function addNovel(){
+ const d=document.getElementById("novelWrap");
+ const i=document.createElement("input");
+ i.type="file"; i.accept=".xlsx"; i.className="novel";
+ d.appendChild(i);
+}
+
+function num(v){return Math.round(Number(String(v??0).replace(/,/g,""))||0);}
+function fmt(v){return Number(v).toLocaleString("ko-KR")}
+function prevDate(d){const x=new Date(d+"T00:00:00Z");x.setUTCDate(x.getUTCDate()-1);return x.toISOString().slice(0,10);}
+function utcDate(kst,h){h=parseInt(h,10);return (h>=0&&h<=8)?prevDate(kst):kst;}
+function add(map,d,n,c,i,k){
+ if(!d||!n)return;
+ const key=d+"|"+n;
+ if(!map[key])map[key]={d,n,c:0,i:0,k:0};
+ map[key].c+=c; map[key].i+=i; map[key].k+=k;
+}
+function parseCSV(f){
+ return new Promise(r=>{
+  const fr=new FileReader();
+  fr.onload=()=>{
+   const txt=fr.result.split(/\r?\n/).slice(2).join("\n");
+   r(Papa.parse(txt,{header:true,delimiter:"\t",skipEmptyLines:true}).data);
+  };
+  fr.readAsText(f,"utf-16");
+ });
+}
+function parseXLSX(f){
+ return new Promise(r=>{
+  const fr=new FileReader();
+  fr.onload=e=>{
+   const wb=XLSX.read(e.target.result,{type:"binary"});
+   r(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]));
+  };
+  fr.readAsBinaryString(f);
+ });
+}
+
+async function run(){
+ const utc={}, kst={}, seen=new Set();
+ status.innerText="처리 중…";
+
+ if(adg.files[0]){
+  (await parseCSV(adg.files[0])).forEach(r=>{
+   add(kst,r["일"],r["광고그룹"],num(r["비용"]),num(r["노출수"]),num(r["클릭수"]));
+   add(utc,utcDate(r["일"],r["시간대"]),r["광고그룹"],num(r["비용"]),num(r["노출수"]),num(r["클릭수"]));
+  });
+ }
+ if(pmax.files[0]){
+  (await parseCSV(pmax.files[0])).forEach(r=>{
+   add(kst,r["일"],r["캠페인"],num(r["비용"]),num(r["노출수"]),num(r["클릭수"]));
+   add(utc,utcDate(r["일"],r["시간대"]),r["캠페인"],num(r["비용"]),num(r["노출수"]),num(r["클릭수"]));
+  });
+ }
+
+ const novels=[...document.querySelectorAll(".novel")].map(i=>i.files[0]).filter(Boolean);
+ for(const f of novels){
+  (await parseXLSX(f)).forEach(r=>{
+   const d=r["Date"].replaceAll("/","-");
+   const h=String(r["Time of Day"]).padStart(2,"0");
+   const key=d+"|"+h+"|"+r["Line Item"];
+   if(seen.has(key)) return; // 위 파일 우선
+   seen.add(key);
+   add(kst,d,r["Line Item"],num(r["소진비"]||r["Cost"]),num(r["Impressions"]),num(r["Clicks"]));
+   add(utc,utcDate(d,h),r["Line Item"],num(r["소진비"]||r["Cost"]),num(r["Impressions"]),num(r["Clicks"]));
+  });
+ }
+
+ render("utc","UTC 기준",utc);
+ render("kst","KST 기준",kst);
+ status.innerText="완료";
+}
+
+function render(id,title,map){
+ const rows=Object.values(map).sort((a,b)=>a.d.localeCompare(b.d)||a.n.localeCompare(b.n));
+ let last=null,alt=0,sumC=0,sumI=0,sumK=0;
+ let dateT="<table><tr><th>날짜</th></tr>";
+ let metaT="<table><tr><th>광고그룹 / 캠페인</th><th>KRW 비용</th></tr>";
+ let metricT="<table><tr><th>노출수</th><th>클릭수</th></tr>";
+
+ rows.forEach(r=>{
+  if(r.d!==last){alt++;last=r.d}
+  const cls=alt%2?"day1":"day2";
+  sumC+=r.c; sumI+=r.i; sumK+=r.k;
+  dateT+=`<tr class="${cls}"><td>${r.d}</td></tr>`;
+  metaT+=`<tr class="${cls}"><td class="text-left">${r.n}</td><td>${fmt(r.c)}</td></tr>`;
+  metricT+=`<tr class="${cls}"><td>${fmt(r.i)}</td><td>${fmt(r.k)}</td></tr>`;
+ });
+
+ dateT+=`<tr class="sum"><td>총합</td></tr></table>`;
+ metaT+=`<tr class="sum"><td></td><td>${fmt(sumC)}</td></tr></table>`;
+ metricT+=`<tr class="sum"><td>${fmt(sumI)}</td><td>${fmt(sumK)}</td></tr></table>`;
+
+ document.getElementById(id).innerHTML=
+ `<div class="section-title">${title}</div>
+  <div class="wrap">
+   <div class="block date">${dateT}</div>
+   <div class="block meta">${metaT}</div>
+   <div class="block metric">${metricT}</div>
+  </div>`;
+}
+</script>
+
+</body>
+</html>
