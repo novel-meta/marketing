@@ -1,0 +1,2489 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>㈜메타크래프트 업무 현황 보고 대시보드</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0a0e17;
+  --bg-secondary: #111827;
+  --bg-card: #1a2234;
+  --bg-card-hover: #1f2a40;
+  --bg-input: #0d1321;
+  --border: #2a3650;
+  --border-focus: #3b82f6;
+  --text-primary: #e8ecf4;
+  --text-secondary: #8899b4;
+  --text-muted: #5a6a85;
+  --accent-blue: #3b82f6;
+  --accent-cyan: #06b6d4;
+  --accent-emerald: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+  --accent-violet: #8b5cf6;
+  --gradient-header: linear-gradient(135deg, #1e3a5f 0%, #0f172a 50%, #1a1040 100%);
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.3);
+  --shadow-glow: 0 0 30px rgba(59,130,246,0.08);
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* Header */
+.header {
+  background: var(--gradient-header);
+  border-bottom: 1px solid var(--border);
+  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-inner {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 24px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.logo-mark {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 20px;
+  color: white;
+  letter-spacing: -1px;
+  flex-shrink: 0;
+}
+
+.header-title h1 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #fff;
+}
+
+.header-title p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--accent-cyan);
+  background: rgba(6,182,212,0.08);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(6,182,212,0.15);
+}
+
+.btn-print {
+  background: var(--accent-blue);
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+.btn-print:hover { background: #2563eb; transform: translateY(-1px); }
+
+.btn-save {
+  background: var(--accent-emerald);
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.btn-save:hover { background: #059669; transform: translateY(-1px); }
+.btn-save.saved { background: #065f46; }
+
+.btn-export {
+  background: var(--accent-violet);
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.btn-export:hover { background: #7c3aed; transform: translateY(-1px); }
+
+/* Toast notification */
+#toast {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  background: var(--bg-card);
+  border: 1px solid var(--accent-emerald);
+  color: var(--accent-emerald);
+  padding: 14px 24px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 9999;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+#toast.show { opacity: 1; transform: translateY(0); }
+
+.btn-expand-all {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+.btn-expand-all:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+
+/* Stats Bar */
+.stats-bar {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 20px 40px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.stat-chip {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.stat-chip .stat-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.stat-chip .stat-label { color: var(--text-secondary); }
+.stat-chip .stat-value { font-weight: 700; font-family: 'JetBrains Mono', monospace; font-size: 15px; }
+
+/* Main Content */
+.main {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 8px 40px 60px;
+}
+
+/* Division Section */
+.division {
+  margin-bottom: 32px;
+}
+
+.division-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding: 16px 20px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.division-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.division-info h2 {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.division-info span {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Team Card */
+.team-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+
+.team-card:hover { box-shadow: var(--shadow-glow); }
+
+.team-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.team-header:hover { background: var(--bg-card-hover); }
+
+.team-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.team-color-bar {
+  width: 4px;
+  height: 36px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.team-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.team-leader {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 1px;
+}
+
+.team-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.team-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-muted);
+  background: var(--bg-input);
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.chevron {
+  color: var(--text-muted);
+  transition: transform 0.25s ease;
+  font-size: 18px;
+}
+
+.team-card.open .chevron { transform: rotate(180deg); }
+
+/* Team Body */
+.team-body {
+  display: none;
+  border-top: 1px solid var(--border);
+}
+
+.team-card.open .team-body { display: block; }
+
+/* Team Summary */
+.team-summary {
+  padding: 20px 24px;
+  background: rgba(59,130,246,0.03);
+  border-bottom: 1px solid var(--border);
+}
+
+.team-summary-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-blue);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.summary-field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.summary-field textarea {
+  width: 100%;
+  min-height: 72px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 10px 14px;
+  font-size: 13px;
+  font-family: 'Noto Sans KR', sans-serif;
+  resize: none;
+  overflow: hidden;
+  transition: border-color 0.2s;
+  line-height: 1.6;
+  box-sizing: border-box;
+}
+
+.summary-field textarea:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
+
+.summary-field textarea::placeholder { color: var(--text-muted); }
+
+/* Member Table */
+.member-section {
+  padding: 20px 24px;
+}
+
+.member-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-emerald);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.member-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.member-table thead th {
+  background: var(--bg-input);
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+}
+
+.member-table thead th:first-child { border-radius: var(--radius-sm) 0 0 0; }
+.member-table thead th:last-child { border-radius: 0 var(--radius-sm) 0 0; }
+
+.member-table tbody tr { transition: background 0.1s; }
+.member-table tbody tr:hover { background: rgba(59,130,246,0.03); }
+
+.member-table tbody td {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(42,54,80,0.5);
+  vertical-align: top;
+  font-size: 13px;
+  word-break: keep-all;
+}
+
+.member-table tbody tr:last-child td { border-bottom: none; }
+
+.member-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.member-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.member-name { font-weight: 500; }
+
+.member-rank {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg-input);
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-left: 4px;
+}
+
+.status-select {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  padding: 6px 10px;
+  font-size: 12px;
+  font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
+  width: 100%;
+  max-width: 140px;
+}
+
+.status-select:focus { outline: none; border-color: var(--accent-blue); }
+
+.cell-input {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  padding: 6px 10px;
+  font-size: 13px;
+  font-family: 'Noto Sans KR', sans-serif;
+  transition: border-color 0.2s;
+  min-height: 34px;
+  height: auto;
+  resize: none;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.cell-input:focus { outline: none; border-color: var(--accent-blue); }
+.cell-input::placeholder { color: var(--text-muted); font-size: 12px; }
+
+/* Column widths */
+.col-name { width: 140px; }
+.col-status { width: 120px; }
+.col-task { width: auto; }
+.col-target { width: auto; }
+.col-note { width: 180px; }
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 32px 40px;
+  color: var(--text-muted);
+  font-size: 12px;
+  border-top: 1px solid var(--border);
+  margin-top: 20px;
+}
+
+/* Print */
+@media print {
+  body { background: #fff; color: #111; }
+  .header { position: relative; background: #f8f9fa; border-bottom: 2px solid #ddd; }
+  .header-title h1 { color: #111; }
+  .btn-print, .btn-expand-all { display: none; }
+  .team-card { break-inside: avoid; border-color: #ddd; background: #fff; }
+  .team-body { display: block !important; }
+  .team-header { background: #f8f9fa; }
+  .member-table thead th { background: #f0f0f0; }
+  .summary-field textarea, .cell-input, .status-select { border-color: #ccc; background: #fafafa; }
+  .stats-bar { display: none; }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .header-inner, .stats-bar, .main { padding-left: 20px; padding-right: 20px; }
+  .summary-grid { grid-template-columns: 1fr; }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .header-inner { padding: 16px; flex-wrap: wrap; gap: 12px; }
+  .header-title h1 { font-size: 16px; }
+  .header-right { gap: 8px; flex-wrap: wrap; }
+  .stats-bar { padding: 12px 16px; gap: 8px; }
+  .stat-chip { font-size: 11px; padding: 6px 12px; }
+  .main { padding: 8px 16px 40px; }
+  .division-header { padding: 12px 16px; }
+  .team-header { padding: 12px 16px; }
+
+  /* 테이블 → 카드형으로 변환 */
+  .member-table thead { display: none; }
+  .member-table tbody tr {
+    display: block;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-bottom: 12px;
+    padding: 12px;
+    background: var(--bg-input);
+  }
+  .member-table tbody td {
+    display: block;
+    padding: 6px 0;
+    border-bottom: none;
+    font-size: 13px;
+  }
+  .member-table tbody td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .col-name, .col-status { width: auto; }
+  .status-select { max-width: 100%; width: 100%; }
+  .cell-input { width: 100%; }
+  .summary-grid { grid-template-columns: 1fr; }
+  .member-name-cell { flex-wrap: wrap; }
+}
+
+/* Metrics Section */
+.metrics-section { padding: 20px 24px; border-top: 1px solid var(--border); }
+.metrics-section-title { font-size: 13px; font-weight: 600; color: var(--accent-amber); margin-bottom: 16px; }
+.metrics-regions { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; }
+@media (max-width: 768px) { .metrics-regions { grid-template-columns: 1fr; } }
+.metrics-card { background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; display: flex; flex-direction: column; }
+.metrics-card-header { padding: 10px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+.region-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px; }
+.badge-kr { background: rgba(59,130,246,0.15); color: #3b82f6; border: 1px solid rgba(59,130,246,0.3); }
+.badge-global { background: rgba(139,92,246,0.15); color: #8b5cf6; border: 1px solid rgba(139,92,246,0.3); }
+.metrics-card-label { font-size: 13px; font-weight: 600; }
+.metrics-grid { padding: 14px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex: 1; align-content: start; }
+.metric-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; min-height: 72px; display: flex; flex-direction: column; justify-content: center; }
+.metric-box.full { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: unset; flex-direction: row; }
+.metric-box-label { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
+.metric-box.full .metric-box-label { margin-bottom: 0; }
+.metric-input { background: transparent; border: none; outline: none; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; color: var(--text-primary); width: 100%; }
+.metric-input::placeholder { color: var(--border); }
+.metric-input.highlight { color: var(--accent-amber); font-size: 18px; }
+.metric-krw { font-size: 11px; color: var(--text-muted); margin-top: 3px; font-family: 'JetBrains Mono', monospace; }
+
+/* Project Progress */
+.project-section { margin-top: 0; padding: 20px 24px; border-top: 1px solid var(--border); }
+.project-section-title { font-size: 13px; font-weight: 600; color: var(--accent-violet); margin-bottom: 16px; }
+.project-list { display: flex; flex-direction: column; gap: 12px; }
+.project-item { background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; }
+.project-item-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.project-name-input { flex: 1; background: transparent; border: none; color: var(--text-primary); font-size: 13px; font-weight: 600; font-family: 'Noto Sans KR', sans-serif; outline: none; }
+.project-name-input::placeholder { color: var(--text-muted); font-weight: 400; }
+.project-percent { font-size: 13px; font-weight: 700; color: var(--accent-violet); min-width: 38px; text-align: right; }
+.project-bar-wrap { position: relative; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.project-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #8b5cf6, #06b6d4); transition: width 0.3s ease; }
+.project-slider { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; margin: 0; }
+.project-add-btn { margin-top: 12px; width: 100%; background: transparent; border: 1px dashed var(--border); border-radius: var(--radius-sm); color: var(--text-muted); font-size: 13px; padding: 10px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: border-color 0.2s, color 0.2s; }
+.project-add-btn:hover { border-color: var(--accent-violet); color: var(--accent-violet); }
+.project-delete-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; padding: 2px 6px; transition: color 0.2s; }
+.project-delete-btn:hover { color: var(--accent-rose); }
+</style>
+<style>
+  .export-banner {
+    background: linear-gradient(90deg, #1e3a5f, #1a1040);
+    color: #06b6d4;
+    text-align: center;
+    padding: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #2a3650;
+  }
+  textarea, select { pointer-events: none !important; }
+  .btn-save, .btn-export, .btn-print, .btn-expand-all { display: none !important; }
+  .chevron { display: none !important; }
+</style>
+</head>
+<body>
+<div class="export-banner">📋 이 파일은 공유용 읽기 전용 보고서입니다 · ㈜메타크래프트 업무 현황 보고 대시보드</div>
+<div class="header">
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="logo-mark">MC</div>
+      <div class="header-title">
+        <h1>㈜메타크래프트 업무 현황 보고 대시보드</h1>
+        <p>각 팀별 / 개인별 업무 현황 보고서 · 기준일자 2026-02-27</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="header-date">2026. 03. 03. (화)</div>
+    </div>
+  </div>
+</div>
+<div class="stats-bar" id="statsBar">
+  <div class="stat-chip"><div class="stat-dot" style="background:var(--accent-blue)"></div><span class="stat-label">총 인원</span><span class="stat-value">96명</span></div>
+  <div class="stat-chip"><div class="stat-dot" style="background:var(--accent-cyan)"></div><span class="stat-label">본부</span><span class="stat-value">5개</span></div>
+  <div class="stat-chip"><div class="stat-dot" style="background:var(--accent-rose)"></div><span class="stat-label">보고기준일</span><span class="stat-value">2026-02-27</span></div>
+</div>
+<div class="main">
+  <div class="division">
+        <div class="division-header">
+          <div class="division-icon" style="background:#3b82f620;color:#3b82f6">🏢</div>
+          <div class="division-info">
+            <h2>경영지원본부</h2>
+            <span>강동문 이사 · 3개 팀 · 5명</span>
+          </div>
+        </div>
+        <div class="team-card">
+          <div class="team-header">
+            <div class="team-header-left">
+              <div class="team-color-bar" style="background:#3b82f6"></div>
+              <div>
+                <div class="team-name">경영지원팀</div>
+                <div class="team-leader">팀장: 정한교 차장</div>
+              </div>
+            </div>
+            <div class="team-header-right">
+              <span class="team-count">3명</span>
+            </div>
+          </div>
+          <div class="team-body">
+            <div class="team-summary">
+              <div class="team-summary-title">📋 팀 업무 현황 (팀장 작성)</div>
+              <div class="summary-grid">
+          <div class="summary-field">
+            <label>현재 주요 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>금주 목표 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>이슈 및 리스크</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>요청 / 협조 사항</label>
+            <textarea readonly></textarea>
+          </div></div>
+            </div>
+            
+            
+            <div class="member-section">
+              <div class="member-section-title">👤 개인별 업무 현황</div>
+              <table class="member-table">
+              <thead><tr>
+                <th class="col-name">이름 / 직급</th>
+                <th class="col-status">진행 상태</th>
+                <th class="col-task">현재 주요 업무</th>
+                <th class="col-target">금주 목표 업무</th>
+                <th class="col-note">비고</th>
+              </tr></thead>
+              <tbody><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#06b6d4">노</div>
+            <span class="member-name">노국진</span>
+            <span class="member-rank">과장</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#3b82f6">이</div>
+            <span class="member-name">이윤미</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#f59e0b">김</div>
+            <span class="member-name">김다영</span>
+            <span class="member-rank">주임</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr></tbody>
+            </table>
+            </div>
+          </div>
+        </div><div class="team-card">
+          <div class="team-header">
+            <div class="team-header-left">
+              <div class="team-color-bar" style="background:#6366f1"></div>
+              <div>
+                <div class="team-name">재무회계팀</div>
+                <div class="team-leader">팀장: 양형모 차장</div>
+              </div>
+            </div>
+            <div class="team-header-right">
+              <span class="team-count">2명</span>
+            </div>
+          </div>
+          <div class="team-body">
+            <div class="team-summary">
+              <div class="team-summary-title">📋 팀 업무 현황 (팀장 작성)</div>
+              <div class="summary-grid">
+          <div class="summary-field">
+            <label>현재 주요 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>금주 목표 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>이슈 및 리스크</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>요청 / 협조 사항</label>
+            <textarea readonly></textarea>
+          </div></div>
+            </div>
+            
+            
+            <div class="member-section">
+              <div class="member-section-title">👤 개인별 업무 현황</div>
+              <table class="member-table">
+              <thead><tr>
+                <th class="col-name">이름 / 직급</th>
+                <th class="col-status">진행 상태</th>
+                <th class="col-task">현재 주요 업무</th>
+                <th class="col-target">금주 목표 업무</th>
+                <th class="col-note">비고</th>
+              </tr></thead>
+              <tbody><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#6366f1">정</div>
+            <span class="member-name">정승현</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#6366f1">김</div>
+            <span class="member-name">김수진</span>
+            <span class="member-rank">주임</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr></tbody>
+            </table>
+            </div>
+          </div>
+        </div><div class="team-card">
+          <div class="team-header">
+            <div class="team-header-left">
+              <div class="team-color-bar" style="background:#8b5cf6"></div>
+              <div>
+                <div class="team-name">IR팀</div>
+                <div class="team-leader">팀장: -</div>
+              </div>
+            </div>
+            <div class="team-header-right">
+              <span class="team-count">0명</span>
+            </div>
+          </div>
+          <div class="team-body">
+            <div class="team-summary">
+              <div class="team-summary-title">📋 팀 업무 현황 (팀장 작성)</div>
+              <div class="summary-grid">
+          <div class="summary-field">
+            <label>현재 주요 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>금주 목표 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>이슈 및 리스크</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>요청 / 협조 사항</label>
+            <textarea readonly></textarea>
+          </div></div>
+            </div>
+            
+            
+            <div class="member-section">
+              <div class="member-section-title">👤 개인별 업무 현황</div>
+              <p style="color:var(--text-muted);font-size:13px;padding:8px 0;">배정 인원 없음</p>
+            </div>
+          </div>
+        </div>
+      </div><div class="division">
+        <div class="division-header">
+          <div class="division-icon" style="background:#06b6d420;color:#06b6d4">🌐</div>
+          <div class="division-info">
+            <h2>서비스사업본부</h2>
+            <span>김경훈 본부장 · 3개 팀 · 13명</span>
+          </div>
+        </div>
+        <div class="team-card">
+          <div class="team-header">
+            <div class="team-header-left">
+              <div class="team-color-bar" style="background:#06b6d4"></div>
+              <div>
+                <div class="team-name">국내 플랫폼 사업팀</div>
+                <div class="team-leader">팀장: 김강아 차장</div>
+              </div>
+            </div>
+            <div class="team-header-right">
+              <span class="team-count">4명</span>
+            </div>
+          </div>
+          <div class="team-body">
+            <div class="team-summary">
+              <div class="team-summary-title">📋 팀 업무 현황 (팀장 작성)</div>
+              <div class="summary-grid">
+          <div class="summary-field">
+            <label>현재 주요 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>금주 목표 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>이슈 및 리스크</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>요청 / 협조 사항</label>
+            <textarea readonly></textarea>
+          </div></div>
+            </div>
+            
+            
+            <div class="member-section">
+              <div class="member-section-title">👤 개인별 업무 현황</div>
+              <table class="member-table">
+              <thead><tr>
+                <th class="col-name">이름 / 직급</th>
+                <th class="col-status">진행 상태</th>
+                <th class="col-task">현재 주요 업무</th>
+                <th class="col-target">금주 목표 업무</th>
+                <th class="col-note">비고</th>
+              </tr></thead>
+              <tbody><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#ef4444">송</div>
+            <span class="member-name">송가현</span>
+            <span class="member-rank">주임</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#f43f5e">남</div>
+            <span class="member-name">남희진</span>
+            <span class="member-rank">주임</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#10b981">박</div>
+            <span class="member-name">박진경</span>
+            <span class="member-rank">주임</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#3b82f6">김</div>
+            <span class="member-name">김채윤</span>
+            <span class="member-rank">주임</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr></tbody>
+            </table>
+            </div>
+          </div>
+        </div><div class="team-card">
+          <div class="team-header">
+            <div class="team-header-left">
+              <div class="team-color-bar" style="background:#0891b2"></div>
+              <div>
+                <div class="team-name">글로벌 플랫폼 사업팀</div>
+                <div class="team-leader">팀장: 윤두섭 과장</div>
+              </div>
+            </div>
+            <div class="team-header-right">
+              <span class="team-count">7명</span>
+            </div>
+          </div>
+          <div class="team-body">
+            <div class="team-summary">
+              <div class="team-summary-title">📋 팀 업무 현황 (팀장 작성)</div>
+              <div class="summary-grid">
+          <div class="summary-field">
+            <label>현재 주요 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>금주 목표 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>이슈 및 리스크</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>요청 / 협조 사항</label>
+            <textarea readonly></textarea>
+          </div></div>
+            </div>
+            
+            
+            <div class="member-section">
+              <div class="member-section-title">👤 개인별 업무 현황</div>
+              <table class="member-table">
+              <thead><tr>
+                <th class="col-name">이름 / 직급</th>
+                <th class="col-status">진행 상태</th>
+                <th class="col-task">현재 주요 업무</th>
+                <th class="col-target">금주 목표 업무</th>
+                <th class="col-note">비고</th>
+              </tr></thead>
+              <tbody><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#f43f5e">이</div>
+            <span class="member-name">이다현</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#ef4444">양</div>
+            <span class="member-name">양태훈</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#6366f1">박</div>
+            <span class="member-name">박도영</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#06b6d4">이</div>
+            <span class="member-name">이승빈</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#f43f5e">서</div>
+            <span class="member-name">서예빈</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#3b82f6">이</div>
+            <span class="member-name">이지환</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#f59e0b">백</div>
+            <span class="member-name">백규림</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr></tbody>
+            </table>
+            </div>
+          </div>
+        </div><div class="team-card open">
+          <div class="team-header">
+            <div class="team-header-left">
+              <div class="team-color-bar" style="background:#14b8a6"></div>
+              <div>
+                <div class="team-name">마케팅팀</div>
+                <div class="team-leader">팀장: 천유정 과장</div>
+              </div>
+            </div>
+            <div class="team-header-right">
+              <span class="team-count">2명</span>
+            </div>
+          </div>
+          <div class="team-body">
+            <div class="team-summary">
+              <div class="team-summary-title">📋 팀 업무 현황 (팀장 작성)</div>
+              <div class="summary-grid">
+          <div class="summary-field">
+            <label>현재 주요 업무</label>
+            <textarea readonly>[퍼포먼스 마케팅]
+· 국내 / 글로벌 유료 매체(Meta Ads·Google Ads 등) 캠페인 운영 및 예산 배분 관리
+· 매체별 CPA·ROAS·CTR 지표 모니터링 및 전환 목표(Purchase, Sign-up), 입찰전략 최적화
+· 플랫폼 데이터 기반 전환 추적 및 크리에이티브별 성과 분석
+· 퍼포먼스 크리에이티브 (Animation·Moving Video·Image) 기획 및 제작 A/B 테스트 운영
+
+[SNS 채널 관리]
+· 국내 / 글로벌 공식 SNS(인스타그램·유튜브·트위터) 콘텐츠 기획 및 운영, 정기 업로드
+· 채널별 알고리즘 특성에 맞는 포맷 최적화 (릴스·쇼츠·캐러셀·피드)
+· 글로벌 계정 현지화(로컬라이제이션) 콘텐츠 제작 및 톤앤매너 관리
+</textarea>
+          </div>
+          <div class="summary-field">
+            <label>금주 목표 업무</label>
+            <textarea readonly>[퍼포먼스]
+· 광고 대시보드 구축 (데이터 자동화를 통한 루틴 업무 축소 · 업무 효율 개선)
+· 신규 애니메이션 광고용 크리에이티브 기획, A/B 테스트 세팅 및 초기 데이터 수집
+· 3월 글로벌 BM 변경에 따른 세부 데이터 분석 및 캠페인 부스팅 전략 설정
+
+[SNS]
+· 국내 / 글로벌 채널 주간 콘텐츠 발행 (평균 주간 4건, 전체 채널 업로드)
+· 애니메이션 세팅, UGC 채널 등 신규 채널 부스팅 운영 전략 수립
+· 조회수, 구독자 등 SNS 데이터 관리
+
+[그 외]
+· 버거피아 사후이벤트 굿즈 신청자 발송 요청
+· 애니팝 오프라인 광고 디자인 및 시사 출력 작업
+</textarea>
+          </div>
+          <div class="summary-field">
+            <label>이슈 및 리스크</label>
+            <textarea readonly>· 결제력이 낮은 2-3티어 국가 결제유도 필요 → 2-3티어 대상 BM 구축 및 결제 플로우 개선 논의
+· 글로벌 구글 계정 정지 → 정지 시기에는 연쇄적 계정 정지 발생할 수 있어 부스팅 시점에 맞춰 복원 예정
+· 틱톡 쇼츠 및 유튜브 낮은 조회수 → 신규 UGC 인스타 채널 생성하여 릴스 관리 및 알고리즘 파악을 위한 A/B 테스트 진행
+</textarea>
+          </div>
+          <div class="summary-field">
+            <label>요청 / 협조 사항</label>
+            <textarea readonly>· [글로벌팀] 글로벌 플랫폼 내 플로우 기획 및 개선안 논의
+· [국내팀] 버거피아 사후이벤트 굿즈 발송리스트 물류 전달 및 실배송 처리
+</textarea>
+          </div></div>
+            </div>
+            <div class="metrics-section">
+              <div class="metrics-section-title">📈 2월 광고 성과 지표</div>
+              <div class="metrics-regions">
+                
+                  <div class="metrics-card">
+                    <div class="metrics-card-header"><span class="region-badge badge-global">GLOBAL</span><span class="metrics-card-label">글로벌</span></div>
+                    <div class="metrics-grid">
+                      <div class="metric-box full"><div class="metric-box-label">💰 광고비</div><div><div style="display:flex;align-items:baseline;justify-content:flex-end;gap:6px"><span class="metric-input highlight">₩33,006,370</span><span style="font-size:12px;color:var(--text-muted)">원</span></div><div class="metric-krw" style="text-align:right">≈ $23,576</div></div></div>
+                      <div class="metric-box"><div class="metric-box-label">가입수</div><div class="metric-input">12,270 명</div><div class="metric-krw" style="visibility:hidden">-</div></div>
+                      <div class="metric-box"><div class="metric-box-label">가입 CPA</div><div class="metric-input">₩2,690</div><div class="metric-krw">$1.92</div></div>
+                      <div class="metric-box"><div class="metric-box-label">첫결수</div><div class="metric-input">50 건</div><div class="metric-krw" style="visibility:hidden">-</div></div>
+                      <div class="metric-box"><div class="metric-box-label">첫결율</div><div class="metric-input">0.4%</div><div class="metric-krw" style="visibility:hidden">-</div></div>
+                    </div>
+                  </div>
+                  <div class="metrics-card">
+                    <div class="metrics-card-header"><span class="region-badge badge-kr">KR</span><span class="metrics-card-label">국내</span></div>
+                    <div class="metrics-grid">
+                      <div class="metric-box full"><div class="metric-box-label">💰 광고비</div><div><div style="display:flex;align-items:baseline;justify-content:flex-end;gap:6px"><span class="metric-input highlight">₩20,591,877</span><span style="font-size:12px;color:var(--text-muted)">원</span></div><div class="metric-krw" style="visibility:hidden">-</div></div></div>
+                      <div class="metric-box"><div class="metric-box-label">가입수</div><div class="metric-input">4,760 명</div><div class="metric-krw" style="visibility:hidden">-</div></div>
+                      <div class="metric-box"><div class="metric-box-label">가입 CPA</div><div class="metric-input">₩4,326</div><div class="metric-krw" style="visibility:hidden">-</div></div>
+                      <div class="metric-box"><div class="metric-box-label">총결수</div><div class="metric-input">498 건</div><div class="metric-krw">총결율 10.5%</div></div>
+                      <div class="metric-box"><div class="metric-box-label">총결 CPA</div><div class="metric-input">₩41,349</div><div class="metric-krw" style="visibility:hidden">-</div></div>
+                    </div>
+                  </div>
+              </div>
+            </div>
+            <div class="project-section"><div class="project-section-title">📊 프로젝트 업무 진척도</div><div class="project-list"><div class="project-item"><div class="project-item-header"><span style="flex:1;font-size:13px;font-weight:600;color:var(--text-primary)">버거피아 사후이벤트 굿즈 발송</span><span class="project-percent">80%</span></div><div class="project-bar-wrap" style="cursor:default"><div class="project-bar-fill" style="width:80%"></div></div></div><div class="project-item"><div class="project-item-header"><span style="flex:1;font-size:13px;font-weight:600;color:var(--text-primary)">애니팝 오프라인 광고 노출 관리</span><span class="project-percent">40%</span></div><div class="project-bar-wrap" style="cursor:default"><div class="project-bar-fill" style="width:40%"></div></div></div><div class="project-item"><div class="project-item-header"><span style="flex:1;font-size:13px;font-weight:600;color:var(--text-primary)">AI 인플루언서 채널 노출 최적화</span><span class="project-percent">30%</span></div><div class="project-bar-wrap" style="cursor:default"><div class="project-bar-fill" style="width:30%"></div></div></div></div></div>
+            <div class="member-section">
+              <div class="member-section-title">👤 개인별 업무 현황</div>
+              <table class="member-table">
+              <thead><tr>
+                <th class="col-name">이름 / 직급</th>
+                <th class="col-status">진행 상태</th>
+                <th class="col-task">현재 주요 업무</th>
+                <th class="col-target">금주 목표 업무</th>
+                <th class="col-note">비고</th>
+              </tr></thead>
+              <tbody><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#06b6d4">윤</div>
+            <span class="member-name">윤문섭</span>
+            <span class="member-rank">주임</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="">선택</option><option value="정상진행" selected>🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly>[퍼포먼스]
+· 국내 주요 매체(Meta,DV360,X Ads 등) 캠페인 운영 및 일별 캠페인 예산 배분 관리
+· 매체,소재,타겟별 성과 데이터 취합 및 전환 지표 분석
+· 이미지,영상 소재 기획 및 제작, 캠페인 최적화 테스트 진행
+· 매체사 및 대행사 운영 전략 커뮤니케이션, 핸들링 
+
+[리마케팅]
+· 무료이용권을 통한 유저 재결제 유도 관리
+· 푸쉬, 이벤트 알림 등리마케팅 메시지 세팅 및 데이터 분석을 통한 고도화
+
+[그 외]
+· 애니팝 오프라인 광고 진행을 위한 옥외광고 마케팅 기획
+· 게임 RS 정산,계약 관리 및 프로모션 관리
+· 게임사-작가간 협업 의견 조율 및 일정관리 
+</textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly>· 매체별, 소재별 성과 분석 기반 효율 최적화 조정(크리에이티브,예산,전략 등)
+· 리마케팅 메시지 세그먼트 구조 정비 및 고도화
+· 신규 크리에이티브(Image, Video) 제작 및 셋팅
+· 애니팝 옥외광고 콘텐츠 기획 고도화 및 제작
+· 신작 챌린지 작가 유입 독려를 위한 공모전 플랫폼 게시
+· 게임사 프로모션 진행 (푸쉬홍보, 프로모션 지원)
+</textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly>국내 플랫폼내 웹툰 카테고리 개편 전 예산 축소 운영 전략에 따른 광고 조정 진행
+</textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#14b8a6">황</div>
+            <span class="member-name">황유진</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="">선택</option><option value="정상진행" selected>🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly>· 글로벌 애니메이션 채널 관리 - 예고편형태로 편집본 제작, 업로드부터 데이터 부스팅 A/B 테스트까지(효과적인 시간대,썸네일,태그 등) 
+· AI 인플루언서 관리 - UGC 채널 콘텐츠 기획,제작,운영관리
+· 국내·글로벌 공식 SNS 채널 특성에 맞는 콘텐츠 기획,제작,업로드
+· 시즌별 테마, 유저니즈기반 큐레이션 제작
+· 현지작가의 오리지널 작품 분석,소개,콘텐츠제작
+· SNS 유저 반응 트래킹, DM 응대 관리
+</textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly>· 국내 / 글로벌 정기 콘텐츠 제작 및 발행
+· 글로벌 유튜브 채널 콘텐츠 신규 포맷 기획 - 작품선정, 스토리보드 작업, 영상편집 제작
+· UGC 콘텐츠 제작 
+· 글로벌 애니메이션 롱폼 형태 편집 제작
+· 국내용 AI 인플루언서 콘텐츠(릴스) 기획,제작
+</textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly>SNS 노출 알고리즘 분석 및 A/B 테스트를 통한 채널 지표 부양
+</textarea></td>
+      </tr></tbody>
+            </table>
+            </div>
+          </div>
+        </div>
+      </div><div class="division">
+        <div class="division-header">
+          <div class="division-icon" style="background:#10b98120;color:#10b981">🔬</div>
+          <div class="division-info">
+            <h2>기업부설연구소</h2>
+            <span>(겸) 박태훈 부사장 · 3개 팀 · 30명</span>
+          </div>
+        </div>
+        <div class="team-card">
+          <div class="team-header">
+            <div class="team-header-left">
+              <div class="team-color-bar" style="background:#10b981"></div>
+              <div>
+                <div class="team-name">AI 아트사업팀</div>
+                <div class="team-leader">팀장: 최용길 과장</div>
+              </div>
+            </div>
+            <div class="team-header-right">
+              <span class="team-count">15명</span>
+            </div>
+          </div>
+          <div class="team-body">
+            <div class="team-summary">
+              <div class="team-summary-title">📋 팀 업무 현황 (팀장 작성)</div>
+              <div class="summary-grid">
+          <div class="summary-field">
+            <label>현재 주요 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>금주 목표 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>이슈 및 리스크</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>요청 / 협조 사항</label>
+            <textarea readonly></textarea>
+          </div></div>
+            </div>
+            
+            
+            <div class="member-section">
+              <div class="member-section-title">👤 개인별 업무 현황</div>
+              <table class="member-table">
+              <thead><tr>
+                <th class="col-name">이름 / 직급</th>
+                <th class="col-status">진행 상태</th>
+                <th class="col-task">현재 주요 업무</th>
+                <th class="col-target">금주 목표 업무</th>
+                <th class="col-note">비고</th>
+              </tr></thead>
+              <tbody><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#ec4899">최</div>
+            <span class="member-name">최현재</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#06b6d4">박</div>
+            <span class="member-name">박준범</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#f43f5e">성</div>
+            <span class="member-name">성현승</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#8b5cf6">서</div>
+            <span class="member-name">서보성</span>
+            <span class="member-rank">주임</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#06b6d4">민</div>
+            <span class="member-name">민경범</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#10b981">최</div>
+            <span class="member-name">최현주</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#f59e0b">이</div>
+            <span class="member-name">이재용</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#f43f5e">서</div>
+            <span class="member-name">서현아</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#06b6d4">문</div>
+            <span class="member-name">문제웅</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#3b82f6">임</div>
+            <span class="member-name">임설</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#06b6d4">이</div>
+            <span class="member-name">이형원</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#f43f5e">전</div>
+            <span class="member-name">전재훈</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#3b82f6">전</div>
+            <span class="member-name">전현태</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#ef4444">오</div>
+            <span class="member-name">오정민</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#ef4444">강</div>
+            <span class="member-name">강은결</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr></tbody>
+            </table>
+            </div>
+          </div>
+        </div><div class="team-card">
+          <div class="team-header">
+            <div class="team-header-left">
+              <div class="team-color-bar" style="background:#059669"></div>
+              <div>
+                <div class="team-name">개발팀</div>
+                <div class="team-leader">팀장: 이상기 과장</div>
+              </div>
+            </div>
+            <div class="team-header-right">
+              <span class="team-count">12명</span>
+            </div>
+          </div>
+          <div class="team-body">
+            <div class="team-summary">
+              <div class="team-summary-title">📋 팀 업무 현황 (팀장 작성)</div>
+              <div class="summary-grid">
+          <div class="summary-field">
+            <label>현재 주요 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>금주 목표 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>이슈 및 리스크</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>요청 / 협조 사항</label>
+            <textarea readonly></textarea>
+          </div></div>
+            </div>
+            
+            
+            <div class="member-section">
+              <div class="member-section-title">👤 개인별 업무 현황</div>
+              <table class="member-table">
+              <thead><tr>
+                <th class="col-name">이름 / 직급</th>
+                <th class="col-status">진행 상태</th>
+                <th class="col-task">현재 주요 업무</th>
+                <th class="col-target">금주 목표 업무</th>
+                <th class="col-note">비고</th>
+              </tr></thead>
+              <tbody><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#6366f1">천</div>
+            <span class="member-name">천주다</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#ef4444">최</div>
+            <span class="member-name">최상순</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#06b6d4">유</div>
+            <span class="member-name">유승범</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#10b981">홍</div>
+            <span class="member-name">홍경호</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#6366f1">김</div>
+            <span class="member-name">김주현</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#ec4899">정</div>
+            <span class="member-name">정석현</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#14b8a6">이</div>
+            <span class="member-name">이준협</span>
+            <span class="member-rank">주임</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#3b82f6">김</div>
+            <span class="member-name">김지우</span>
+            <span class="member-rank">주임</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#8b5cf6">박</div>
+            <span class="member-name">박미란</span>
+            <span class="member-rank">주임</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#3b82f6">김</div>
+            <span class="member-name">김민지</span>
+            <span class="member-rank">주임</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#f59e0b">김</div>
+            <span class="member-name">김민정</span>
+            <span class="member-rank">주임</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#8b5cf6">강</div>
+            <span class="member-name">강민수</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr></tbody>
+            </table>
+            </div>
+          </div>
+        </div><div class="team-card">
+          <div class="team-header">
+            <div class="team-header-left">
+              <div class="team-color-bar" style="background:#047857"></div>
+              <div>
+                <div class="team-name">디자인팀</div>
+                <div class="team-leader">팀장: 정지연 과장</div>
+              </div>
+            </div>
+            <div class="team-header-right">
+              <span class="team-count">3명</span>
+            </div>
+          </div>
+          <div class="team-body">
+            <div class="team-summary">
+              <div class="team-summary-title">📋 팀 업무 현황 (팀장 작성)</div>
+              <div class="summary-grid">
+          <div class="summary-field">
+            <label>현재 주요 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>금주 목표 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>이슈 및 리스크</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>요청 / 협조 사항</label>
+            <textarea readonly></textarea>
+          </div></div>
+            </div>
+            
+            
+            <div class="member-section">
+              <div class="member-section-title">👤 개인별 업무 현황</div>
+              <table class="member-table">
+              <thead><tr>
+                <th class="col-name">이름 / 직급</th>
+                <th class="col-status">진행 상태</th>
+                <th class="col-task">현재 주요 업무</th>
+                <th class="col-target">금주 목표 업무</th>
+                <th class="col-note">비고</th>
+              </tr></thead>
+              <tbody><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#6366f1">구</div>
+            <span class="member-name">구미연</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#ec4899">손</div>
+            <span class="member-name">손예림</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#3b82f6">정</div>
+            <span class="member-name">정회욱</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr></tbody>
+            </table>
+            </div>
+          </div>
+        </div>
+      </div><div class="division">
+        <div class="division-header">
+          <div class="division-icon" style="background:#f59e0b20;color:#f59e0b">🎬</div>
+          <div class="division-info">
+            <h2>콘텐츠본부</h2>
+            <span>- · 4개 팀 · 22명</span>
+          </div>
+        </div>
+        <div class="team-card">
+          <div class="team-header">
+            <div class="team-header-left">
+              <div class="team-color-bar" style="background:#f59e0b"></div>
+              <div>
+                <div class="team-name">PD1팀</div>
+                <div class="team-leader">팀장: 노혜영 차장</div>
+              </div>
+            </div>
+            <div class="team-header-right">
+              <span class="team-count">3명</span>
+            </div>
+          </div>
+          <div class="team-body">
+            <div class="team-summary">
+              <div class="team-summary-title">📋 팀 업무 현황 (팀장 작성)</div>
+              <div class="summary-grid">
+          <div class="summary-field">
+            <label>현재 주요 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>금주 목표 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>이슈 및 리스크</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>요청 / 협조 사항</label>
+            <textarea readonly></textarea>
+          </div></div>
+            </div>
+            
+            
+            <div class="member-section">
+              <div class="member-section-title">👤 개인별 업무 현황</div>
+              <table class="member-table">
+              <thead><tr>
+                <th class="col-name">이름 / 직급</th>
+                <th class="col-status">진행 상태</th>
+                <th class="col-task">현재 주요 업무</th>
+                <th class="col-target">금주 목표 업무</th>
+                <th class="col-note">비고</th>
+              </tr></thead>
+              <tbody><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#8b5cf6">정</div>
+            <span class="member-name">정석용</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#ec4899">박</div>
+            <span class="member-name">박성호</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#ec4899">박</div>
+            <span class="member-name">박윤석</span>
+            <span class="member-rank">주임</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr></tbody>
+            </table>
+            </div>
+          </div>
+        </div><div class="team-card">
+          <div class="team-header">
+            <div class="team-header-left">
+              <div class="team-color-bar" style="background:#d97706"></div>
+              <div>
+                <div class="team-name">PD2팀</div>
+                <div class="team-leader">팀장: (겸) 노혜영 차장</div>
+              </div>
+            </div>
+            <div class="team-header-right">
+              <span class="team-count">8명</span>
+            </div>
+          </div>
+          <div class="team-body">
+            <div class="team-summary">
+              <div class="team-summary-title">📋 팀 업무 현황 (팀장 작성)</div>
+              <div class="summary-grid">
+          <div class="summary-field">
+            <label>현재 주요 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>금주 목표 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>이슈 및 리스크</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>요청 / 협조 사항</label>
+            <textarea readonly></textarea>
+          </div></div>
+            </div>
+            
+            
+            <div class="member-section">
+              <div class="member-section-title">👤 개인별 업무 현황</div>
+              <table class="member-table">
+              <thead><tr>
+                <th class="col-name">이름 / 직급</th>
+                <th class="col-status">진행 상태</th>
+                <th class="col-task">현재 주요 업무</th>
+                <th class="col-target">금주 목표 업무</th>
+                <th class="col-note">비고</th>
+              </tr></thead>
+              <tbody><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#3b82f6">신</div>
+            <span class="member-name">신유원</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#ef4444">박</div>
+            <span class="member-name">박태환</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#f59e0b">이</div>
+            <span class="member-name">이강호</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#10b981">서</div>
+            <span class="member-name">서연우</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#f59e0b">민</div>
+            <span class="member-name">민세웅</span>
+            <span class="member-rank">주임</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#ec4899">정</div>
+            <span class="member-name">정경훈</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#10b981">권</div>
+            <span class="member-name">권순빈</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#10b981">김</div>
+            <span class="member-name">김영웅</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr></tbody>
+            </table>
+            </div>
+          </div>
+        </div><div class="team-card">
+          <div class="team-header">
+            <div class="team-header-left">
+              <div class="team-color-bar" style="background:#b45309"></div>
+              <div>
+                <div class="team-name">PD3팀</div>
+                <div class="team-leader">팀장: (겸) 노혜영 차장</div>
+              </div>
+            </div>
+            <div class="team-header-right">
+              <span class="team-count">8명</span>
+            </div>
+          </div>
+          <div class="team-body">
+            <div class="team-summary">
+              <div class="team-summary-title">📋 팀 업무 현황 (팀장 작성)</div>
+              <div class="summary-grid">
+          <div class="summary-field">
+            <label>현재 주요 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>금주 목표 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>이슈 및 리스크</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>요청 / 협조 사항</label>
+            <textarea readonly></textarea>
+          </div></div>
+            </div>
+            
+            
+            <div class="member-section">
+              <div class="member-section-title">👤 개인별 업무 현황</div>
+              <table class="member-table">
+              <thead><tr>
+                <th class="col-name">이름 / 직급</th>
+                <th class="col-status">진행 상태</th>
+                <th class="col-task">현재 주요 업무</th>
+                <th class="col-target">금주 목표 업무</th>
+                <th class="col-note">비고</th>
+              </tr></thead>
+              <tbody><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#ef4444">조</div>
+            <span class="member-name">조두성</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#f43f5e">권</div>
+            <span class="member-name">권순철</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#8b5cf6">이</div>
+            <span class="member-name">이승원</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#06b6d4">강</div>
+            <span class="member-name">강민우</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#ec4899">정</div>
+            <span class="member-name">정정훈</span>
+            <span class="member-rank">주임</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#14b8a6">이</div>
+            <span class="member-name">이종민</span>
+            <span class="member-rank">주임</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#f43f5e">박</div>
+            <span class="member-name">박성현</span>
+            <span class="member-rank">주임</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#f59e0b">유</div>
+            <span class="member-name">유진형</span>
+            <span class="member-rank">주임</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr></tbody>
+            </table>
+            </div>
+          </div>
+        </div><div class="team-card">
+          <div class="team-header">
+            <div class="team-header-left">
+              <div class="team-color-bar" style="background:#92400e"></div>
+              <div>
+                <div class="team-name">PD4팀</div>
+                <div class="team-leader">팀장: (겸) 노혜영 차장</div>
+              </div>
+            </div>
+            <div class="team-header-right">
+              <span class="team-count">3명</span>
+            </div>
+          </div>
+          <div class="team-body">
+            <div class="team-summary">
+              <div class="team-summary-title">📋 팀 업무 현황 (팀장 작성)</div>
+              <div class="summary-grid">
+          <div class="summary-field">
+            <label>현재 주요 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>금주 목표 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>이슈 및 리스크</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>요청 / 협조 사항</label>
+            <textarea readonly></textarea>
+          </div></div>
+            </div>
+            
+            
+            <div class="member-section">
+              <div class="member-section-title">👤 개인별 업무 현황</div>
+              <table class="member-table">
+              <thead><tr>
+                <th class="col-name">이름 / 직급</th>
+                <th class="col-status">진행 상태</th>
+                <th class="col-task">현재 주요 업무</th>
+                <th class="col-target">금주 목표 업무</th>
+                <th class="col-note">비고</th>
+              </tr></thead>
+              <tbody><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#ef4444">송</div>
+            <span class="member-name">송재우</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#f43f5e">정</div>
+            <span class="member-name">정집규</span>
+            <span class="member-rank">주임</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#3b82f6">이</div>
+            <span class="member-name">이수진</span>
+            <span class="member-rank">주임</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr></tbody>
+            </table>
+            </div>
+          </div>
+        </div>
+      </div><div class="division">
+        <div class="division-header">
+          <div class="division-icon" style="background:#f43f5e20;color:#f43f5e">📦</div>
+          <div class="division-info">
+            <h2>유통사업본부</h2>
+            <span>정용운 본부장 · 1개 팀 · 11명</span>
+          </div>
+        </div>
+        <div class="team-card">
+          <div class="team-header">
+            <div class="team-header-left">
+              <div class="team-color-bar" style="background:#f43f5e"></div>
+              <div>
+                <div class="team-name">유통팀</div>
+                <div class="team-leader">팀장: 홍은지 과장</div>
+              </div>
+            </div>
+            <div class="team-header-right">
+              <span class="team-count">11명</span>
+            </div>
+          </div>
+          <div class="team-body">
+            <div class="team-summary">
+              <div class="team-summary-title">📋 팀 업무 현황 (팀장 작성)</div>
+              <div class="summary-grid">
+          <div class="summary-field">
+            <label>현재 주요 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>금주 목표 업무</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>이슈 및 리스크</label>
+            <textarea readonly></textarea>
+          </div>
+          <div class="summary-field">
+            <label>요청 / 협조 사항</label>
+            <textarea readonly></textarea>
+          </div></div>
+            </div>
+            
+            
+            <div class="member-section">
+              <div class="member-section-title">👤 개인별 업무 현황</div>
+              <table class="member-table">
+              <thead><tr>
+                <th class="col-name">이름 / 직급</th>
+                <th class="col-status">진행 상태</th>
+                <th class="col-task">현재 주요 업무</th>
+                <th class="col-target">금주 목표 업무</th>
+                <th class="col-note">비고</th>
+              </tr></thead>
+              <tbody><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#10b981">이</div>
+            <span class="member-name">이시은</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#ec4899">강</div>
+            <span class="member-name">강민영</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#ec4899">봉</div>
+            <span class="member-name">봉정헌</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#06b6d4">이</div>
+            <span class="member-name">이승빈</span>
+            <span class="member-rank">대리</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#14b8a6">송</div>
+            <span class="member-name">송기범</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#ec4899">이</div>
+            <span class="member-name">이린</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#14b8a6">정</div>
+            <span class="member-name">정현교</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#10b981">이</div>
+            <span class="member-name">이지민</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#14b8a6">박</div>
+            <span class="member-name">박희선</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#f43f5e">김</div>
+            <span class="member-name">김은지</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr><tr>
+        <td>
+          <div class="member-name-cell">
+            <div class="member-avatar" style="background:#f59e0b">김</div>
+            <span class="member-name">김민정</span>
+            <span class="member-rank">사원</span>
+          </div>
+        </td>
+        <td><select class="status-select" disabled><option value="" selected>선택</option><option value="정상진행">🟢 정상진행</option><option value="주의">🟡 주의</option><option value="지연">🔴 지연</option><option value="완료">✅ 완료</option><option value="대기">⏸️ 대기</option></select></td>
+        <td data-label="현재 주요 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="금주 목표 업무"><textarea class="cell-input" readonly></textarea></td>
+        <td data-label="비고"><textarea class="cell-input" readonly></textarea></td>
+      </tr></tbody>
+            </table>
+            </div>
+          </div>
+        </div>
+      </div>
+</div>
+<div class="footer">㈜메타크래프트 경영지원팀 · 본 대시보드는 각 부서 업무 현황 취합용으로 사용됩니다</div>
+<script>
+// auto-resize textareas on load
+window.addEventListener('load', () => {
+  document.querySelectorAll('textarea').forEach(ta => {
+    ta.style.height = '0px';
+    ta.style.height = ta.scrollHeight + 'px';
+  });
+});
+</script>
+</body>
+</html>
