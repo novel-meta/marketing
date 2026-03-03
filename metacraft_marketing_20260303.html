@@ -615,8 +615,8 @@ body {
 .badge-global { background: rgba(139,92,246,0.15); color: #8b5cf6; border: 1px solid rgba(139,92,246,0.3); }
 .metrics-card-label { font-size: 13px; font-weight: 600; }
 .metrics-grid { padding: 14px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex: 1; align-content: start; }
-.metric-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; }
-.metric-box.full { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.metric-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; min-height: 72px; display: flex; flex-direction: column; justify-content: center; }
+.metric-box.full { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: unset; flex-direction: row; }
 .metric-box-label { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
 .metric-box.full .metric-box-label { margin-bottom: 0; }
 .metric-input { background: transparent; border: none; outline: none; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; color: var(--text-primary); width: 100%; }
