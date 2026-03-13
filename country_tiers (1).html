@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>국가 티어 분류표</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3a;
+    --text: #e8e8f0;
+    --text-dim: #8888a0;
+    --tier1: #f0c040;
+    --tier1-bg: rgba(240,192,64,0.08);
+    --tier1-border: rgba(240,192,64,0.25);
+    --tier2: #60a0e0;
+    --tier2-bg: rgba(96,160,224,0.08);
+    --tier2-border: rgba(96,160,224,0.25);
+    --tier3: #707088;
+    --tier3-bg: rgba(112,112,136,0.05);
+    --tier3-border: rgba(112,112,136,0.18);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  .noise {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 256px;
+  }
+
+  .container {
+    position: relative; z-index: 1;
+    max-width: 1200px; margin: 0 auto; padding: 60px 24px 80px;
+  }
+
+  header {
+    text-align: center; margin-bottom: 48px;
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 900; font-size: 3rem; letter-spacing: -1px;
+    background: linear-gradient(135deg, #f0c040, #e08030, #f0c040);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+
+  header p {
+    color: var(--text-dim); font-size: 0.95rem; font-weight: 300;
+  }
+
+  /* Stats bar */
+  .stats {
+    display: flex; gap: 1px; margin-bottom: 40px;
+    background: var(--border); border-radius: 12px; overflow: hidden;
+  }
+  .stat {
+    flex: 1; padding: 20px; text-align: center; background: var(--surface);
+  }
+  .stat:first-child { border-radius: 12px 0 0 12px; }
+  .stat:last-child { border-radius: 0 12px 12px 0; }
+  .stat-num { font-family: 'JetBrains Mono', monospace; font-size: 2rem; font-weight: 600; }
+  .stat-label { font-size: 0.8rem; color: var(--text-dim); margin-top: 2px; }
+  .stat.t1 .stat-num { color: var(--tier1); }
+  .stat.t2 .stat-num { color: var(--tier2); }
+  .stat.t3 .stat-num { color: var(--tier3); }
+
+  /* Controls */
+  .controls {
+    display: flex; gap: 12px; margin-bottom: 32px; flex-wrap: wrap; align-items: center;
+  }
+  .search-box {
+    flex: 1; min-width: 200px; position: relative;
+  }
+  .search-box input {
+    width: 100%; padding: 12px 16px 12px 42px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    color: var(--text); font-family: 'Noto Sans KR', sans-serif; font-size: 0.9rem;
+    outline: none; transition: border-color 0.2s;
+  }
+  .search-box input:focus { border-color: var(--tier1); }
+  .search-box input::placeholder { color: var(--text-dim); }
+  .search-box svg {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    width: 18px; height: 18px; stroke: var(--text-dim);
+  }
+
+  .filter-btns { display: flex; gap: 6px; }
+  .filter-btn {
+    padding: 10px 20px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text-dim); cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif; font-size: 0.85rem; font-weight: 500;
+    transition: all 0.2s;
+  }
+  .filter-btn:hover { border-color: var(--text-dim); color: var(--text); }
+  .filter-btn.active { color: #fff; }
+  .filter-btn.active[data-tier="all"] { background: #333; border-color: #555; }
+  .filter-btn.active[data-tier="1"] { background: rgba(240,192,64,0.2); border-color: var(--tier1); color: var(--tier1); }
+  .filter-btn.active[data-tier="2"] { background: rgba(96,160,224,0.2); border-color: var(--tier2); color: var(--tier2); }
+  .filter-btn.active[data-tier="3"] { background: rgba(112,112,136,0.15); border-color: var(--tier3); color: #bbb; }
+
+  /* Table */
+  .table-wrap {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    overflow: hidden;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  thead th {
+    padding: 14px 20px; text-align: left; font-weight: 500; font-size: 0.78rem;
+    text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-dim);
+    background: var(--surface2); border-bottom: 1px solid var(--border);
+    cursor: pointer; user-select: none; white-space: nowrap;
+    transition: color 0.2s;
+  }
+  thead th:hover { color: var(--text); }
+  thead th .sort-icon { display: inline-block; margin-left: 4px; opacity: 0.4; font-size: 0.7rem; }
+  thead th.sorted .sort-icon { opacity: 1; color: var(--tier1); }
+
+  tbody tr {
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    transition: background 0.15s;
+  }
+  tbody tr:hover { background: rgba(255,255,255,0.025); }
+  tbody tr:last-child { border-bottom: none; }
+
+  td {
+    padding: 12px 20px; font-size: 0.9rem;
+  }
+
+  td.code {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.82rem;
+    color: var(--text-dim); letter-spacing: 1px;
+  }
+
+  .tier-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .tier-badge.t1 { background: var(--tier1-bg); border: 1px solid var(--tier1-border); color: var(--tier1); }
+  .tier-badge.t2 { background: var(--tier2-bg); border: 1px solid var(--tier2-border); color: var(--tier2); }
+  .tier-badge.t3 { background: var(--tier3-bg); border: 1px solid var(--tier3-border); color: var(--tier3); }
+  .tier-badge .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .tier-badge.t1 .dot { background: var(--tier1); box-shadow: 0 0 6px var(--tier1); }
+  .tier-badge.t2 .dot { background: var(--tier2); box-shadow: 0 0 6px var(--tier2); }
+  .tier-badge.t3 .dot { background: var(--tier3); }
+
+  .count-badge {
+    display: inline-block; margin-left: 12px; font-size: 0.75rem;
+    color: var(--text-dim); font-weight: 400;
+  }
+
+  .no-results {
+    text-align: center; padding: 60px 20px; color: var(--text-dim); font-size: 0.95rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    header h1 { font-size: 2rem; }
+    .stats { flex-direction: column; }
+    .stat:first-child { border-radius: 12px 12px 0 0; }
+    .stat:last-child { border-radius: 0 0 12px 12px; }
+    .controls { flex-direction: column; }
+    td, thead th { padding: 10px 12px; font-size: 0.82rem; }
+    .hide-mobile { display: none; }
+  }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Changed highlight */
+  tbody tr.changed {
+    background: rgba(80, 220, 120, 0.08);
+  }
+  tbody tr.changed:hover {
+    background: rgba(80, 220, 120, 0.12);
+  }
+  .changed-badge {
+    display: inline-block; margin-left: 8px;
+    padding: 2px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 600;
+    background: rgba(80, 220, 120, 0.15); color: #50dc78; border: 1px solid rgba(80, 220, 120, 0.3);
+    letter-spacing: 0.5px; vertical-align: middle;
+  }
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(80, 220, 120, 0); }
+    50% { box-shadow: 0 0 8px 2px rgba(80, 220, 120, 0.15); }
+  }
+  tbody tr.changed td:first-child { border-left: 3px solid #50dc78; }
+
+  .container > * {
+    animation: fadeUp 0.5s ease both;
+  }
+  .container > :nth-child(2) { animation-delay: 0.05s; }
+  .container > :nth-child(3) { animation-delay: 0.1s; }
+  .container > :nth-child(4) { animation-delay: 0.15s; }
+</style>
+</head>
+<body>
+<div class="noise"></div>
+<div class="container">
+  <header>
+    <h1>Country Tier Classification</h1>
+    <p>국가별 티어 분류 현황 — 총 <span id="totalCountries"></span>개국</p>
+  </header>
+
+  <div class="stats">
+    <div class="stat t1">
+      <div class="stat-num" id="t1Count">-</div>
+      <div class="stat-label">Tier 1</div>
+    </div>
+    <div class="stat t2">
+      <div class="stat-num" id="t2Count">-</div>
+      <div class="stat-label">Tier 2</div>
+    </div>
+    <div class="stat t3">
+      <div class="stat-num" id="t3Count">-</div>
+      <div class="stat-label">Tier 3</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="search-box">
+      <svg fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input type="text" id="searchInput" placeholder="국가명 또는 국가코드로 검색...">
+    </div>
+    <div class="filter-btns">
+      <button class="filter-btn active" data-tier="all">전체</button>
+      <button class="filter-btn" data-tier="1">Tier 1</button>
+      <button class="filter-btn" data-tier="2">Tier 2</button>
+      <button class="filter-btn" data-tier="3">Tier 3</button>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th data-col="code">국가코드 <span class="sort-icon">▲</span></th>
+          <th data-col="en">영어 국가명 <span class="sort-icon">▲</span></th>
+          <th data-col="kr">한글 국가명 <span class="sort-icon">▲</span></th>
+          <th data-col="tier" class="sorted">티어 <span class="sort-icon">▲</span></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <div class="no-results" id="noResults" style="display:none;">검색 결과가 없습니다.</div>
+  </div>
+</div>
+
+<script>
+const rawData = [
+  ["XX","미확인","미확인","Tier 3"],
+  ["JP","Japan","일본","Tier 1"],
+  ["KR","South Korea","대한민국","Tier 1"],
+  ["CN","China","중국","Tier 2"],
+  ["KW","Kuwait","쿠웨이트","Tier 2"],
+  ["LV","Latvia","라트비아","Tier 2"],
+  ["LT","Lithuania","리투아니아","Tier 2"],
+  ["TW","Taiwan","대만","Tier 1","changed"],
+  ["AU","Australia","호주","Tier 1"],
+  ["CA","Canada","캐나다","Tier 1"],
+  ["NZ","New Zealand","뉴질랜드","Tier 1"],
+  ["GB","United Kingdom","영국","Tier 1"],
+  ["US","United States","미국","Tier 1"],
+  ["SG","Singapore","싱가포르","Tier 1","changed"],
+  ["ID","Indonesia","인도네시아","Tier 2"],
+  ["MY","Malaysia","말레이시아","Tier 2"],
+  ["PH","Philippines","필리핀","Tier 2"],
+  ["TH","Thailand","태국","Tier 2"],
+  ["IN","India","인도","Tier 3"],
+  ["VN","Vietnam","베트남","Tier 3"],
+  ["AT","Austria","오스트리아","Tier 1"],
+  ["BE","Belgium","벨기에","Tier 1"],
+  ["DK","Denmark","덴마크","Tier 1"],
+  ["FI","Finland","핀란드","Tier 1"],
+  ["FR","France","프랑스","Tier 1"],
+  ["DE","Germany","독일","Tier 1"],
+  ["IS","Iceland","아이슬란드","Tier 1"],
+  ["IE","Ireland","아일랜드","Tier 1"],
+  ["IL","Israel","이스라엘","Tier 1"],
+  ["LU","Luxembourg","룩셈부르크","Tier 1"],
+  ["NL","Netherlands","네덜란드","Tier 1"],
+  ["BQ","Caribbean Netherlands","카리브 네덜란드","Tier 1"],
+  ["NO","Norway","노르웨이","Tier 1"],
+  ["ES","Spain","스페인","Tier 1"],
+  ["SE","Sweden","스웨덴","Tier 1"],
+  ["CH","Switzerland","스위스","Tier 1"],
+  ["IT","Italy","이탈리아","Tier 1","changed"],
+  ["AR","Argentina","아르헨티나","Tier 2"],
+  ["CO","Colombia","콜롬비아","Tier 2"],
+  ["HR","Croatia","크로아티아","Tier 2"],
+  ["CZ","Czech Republic","체코","Tier 2"],
+  ["EE","Estonia","에스토니아","Tier 2"],
+  ["GR","Greece","그리스","Tier 2"],
+  ["HU","Hungary","헝가리","Tier 2"],
+  ["MX","Mexico","멕시코","Tier 2"],
+  ["PL","Poland","폴란드","Tier 2"],
+  ["RU","Russia","러시아","Tier 2"],
+  ["ZA","South Africa","남아프리카공화국","Tier 2"],
+  ["TR","Turkey","터키","Tier 2"],
+  ["HK","Hong Kong","홍콩","Tier 1","changed"],
+  ["TT","Trinidad and Tobago","트리니다드 토바고","Tier 2"],
+  ["PT","Portugal","포르투갈","Tier 2"],
+  ["MA","Morocco","모로코","Tier 2"],
+  ["BR","Brazil","브라질","Tier 3"],
+  ["CL","Chile","칠레","Tier 3"],
+  ["KZ","Kazakhstan","카자흐스탄","Tier 3"],
+  ["AF","Afghanistan","아프가니스탄","Tier 3"],
+  ["AL","Albania","알바니아","Tier 3"],
+  ["DZ","Algeria","알제리","Tier 3"],
+  ["AS","American Samoa","아메리칸사모아","Tier 3"],
+  ["AD","Andorra","안도라","Tier 3"],
+  ["AO","Angola","앙골라","Tier 3"],
+  ["AM","Armenia","아르메니아","Tier 3"],
+  ["AZ","Azerbaijan","아제르바이잔","Tier 3"],
+  ["BS","Bahamas","바하마","Tier 3"],
+  ["BH","Bahrain","바레인","Tier 3"],
+  ["BD","Bangladesh","방글라데시","Tier 3"],
+  ["BB","Barbados","바베이도스","Tier 3"],
+  ["BY","Belarus","벨라루스","Tier 3"],
+  ["BZ","Belize","벨리즈","Tier 3"],
+  ["BJ","Benin","베냉","Tier 3"],
+  ["BT","Bhutan","부탄","Tier 3"],
+  ["BO","Bolivia","볼리비아","Tier 3"],
+  ["BA","Bosnia and Herzegovina","보스니아 헤르체고비나","Tier 3"],
+  ["BW","Botswana","보츠와나","Tier 3"],
+  ["BN","Brunei Darussalam","브루나이","Tier 3"],
+  ["BG","Bulgaria","불가리아","Tier 3"],
+  ["BF","Burkina Faso","부르키나 파소","Tier 3"],
+  ["BI","Burundi","부룬디","Tier 3"],
+  ["KH","Cambodia","캄보디아","Tier 3"],
+  ["CM","Cameroon","카메룬","Tier 3"],
+  ["CV","Cape Verde","카보베르데","Tier 3"],
+  ["CF","Central African Republic","중앙아프리카 공화국","Tier 3"],
+  ["TD","Chad","차드","Tier 3"],
+  ["KM","Comoros","코모로","Tier 3"],
+  ["CG","Congo","콩고","Tier 3"],
+  ["CR","Costa Rica","코스타리카","Tier 3"],
+  ["CU","Cuba","쿠바","Tier 3"],
+  ["CY","Cyprus","키프러스","Tier 3"],
+  ["DJ","Djibouti","지부티","Tier 3"],
+  ["DO","Dominican Republic","도미니카공화국","Tier 3"],
+  ["EC","Ecuador","에콰도르","Tier 3"],
+  ["EG","Egypt","이집트","Tier 3"],
+  ["SV","El Salvador","엘살바도르","Tier 3"],
+  ["ET","Ethiopia","에티오피아","Tier 3"],
+  ["FJ","Fiji","피지","Tier 3"],
+  ["GA","Gabon","가봉","Tier 3"],
+  ["GM","Gambia","감비아","Tier 3"],
+  ["GE","Georgia","조지아","Tier 3"],
+  ["GH","Ghana","가나","Tier 3"],
+  ["GT","Guatemala","과테말라","Tier 3"],
+  ["GN","Guinea","기니","Tier 3"],
+  ["GY","Guyana","가이아나","Tier 3"],
+  ["HT","Haiti","아이티","Tier 3"],
+  ["HN","Honduras","온두라스","Tier 3"],
+  ["IR","Iran","이란","Tier 3"],
+  ["IQ","Iraq","이라크","Tier 3"],
+  ["JM","Jamaica","자메이카","Tier 3"],
+  ["KE","Kenya","케냐","Tier 3"],
+  ["KG","Kyrgyzstan","키르기스스탄","Tier 3"],
+  ["LA","Lao PDR","라오스","Tier 3"],
+  ["LB","Lebanon","레바논","Tier 3"],
+  ["LS","Lesotho","레소토","Tier 3"],
+  ["LR","Liberia","라이베리아","Tier 3"],
+  ["LY","Libya","리비아","Tier 3"],
+  ["MG","Madagascar","마다가스카르","Tier 3"],
+  ["MW","Malawi","말라위","Tier 3"],
+  ["MV","Maldives","몰디브","Tier 3"],
+  ["ML","Mali","말리","Tier 3"],
+  ["MT","Malta","몰타","Tier 3"],
+  ["MR","Mauritania","모리타니아","Tier 3"],
+  ["MU","Mauritius","모리셔스","Tier 3"],
+  ["MD","Moldova","몰도바","Tier 3"],
+  ["MC","Monaco","모나코","Tier 3"],
+  ["MN","Mongolia","몽골","Tier 3"],
+  ["ME","Montenegro","몬테네그로","Tier 3"],
+  ["MM","Myanmar","미얀마","Tier 3"],
+  ["NA","Namibia","나미비아","Tier 3"],
+  ["NP","Nepal","네팔","Tier 3"],
+  ["NI","Nicaragua","니카라과","Tier 3"],
+  ["NE","Niger","니제르","Tier 3"],
+  ["NG","Nigeria","나이지리아","Tier 3"],
+  ["OM","Oman","오만","Tier 3"],
+  ["PK","Pakistan","파키스탄","Tier 3"],
+  ["PA","Panama","파나마","Tier 3"],
+  ["PG","Papua New Guinea","파푸아뉴기니","Tier 3"],
+  ["PY","Paraguay","파라과이","Tier 3"],
+  ["PE","Peru","페루","Tier 3"],
+  ["QA","Qatar","카타르","Tier 3"],
+  ["RO","Romania","루마니아","Tier 3"],
+  ["RW","Rwanda","르완다","Tier 3"],
+  ["SA","Saudi Arabia","사우디아라비아","Tier 3"],
+  ["SN","Senegal","세네갈","Tier 3"],
+  ["RS","Serbia","세르비아","Tier 3"],
+  ["SK","Slovakia","슬로바키아","Tier 3"],
+  ["SI","Slovenia","슬로베니아","Tier 3"],
+  ["LK","Sri Lanka","스리랑카","Tier 3"],
+  ["SY","Syria","시리아","Tier 3"],
+  ["TJ","Tajikistan","타지키스탄","Tier 3"],
+  ["TZ","Tanzania","탄자니아","Tier 3"],
+  ["UG","Uganda","우간다","Tier 3"],
+  ["UA","Ukraine","우크라이나","Tier 3"],
+  ["AE","United Arab Emirates","아랍에미레이트","Tier 3"],
+  ["UY","Uruguay","우루과이","Tier 3"],
+  ["UZ","Uzbekistan","우즈베키스탄","Tier 3"],
+  ["VE","Venezuela","베네수엘라","Tier 3"],
+  ["YE","Yemen","예멘","Tier 3"],
+  ["ZM","Zambia","잠비아","Tier 3"],
+  ["ZW","Zimbabwe","짐바브웨","Tier 3"],
+  ["PR","Puerto Rico","푸에르토리코","Tier 3"],
+  ["TN","Tunisia","튀니지","Tier 3"],
+  ["RD","Dominica Republic","도미니카 공화국","Tier 3"],
+  ["PS","Palestine","팔레스타인","Tier 3"],
+  ["MO","Macau","마카오","Tier 3"],
+  ["LC","Saint Lucia","세인트루시아","Tier 3"],
+  ["SO","Somalia","소말리아","Tier 3"],
+  ["SR","Suriname","수리남","Tier 3"],
+  ["BM","Bermuda","버뮤다","Tier 3"],
+  ["IM","Isle of Man","맨 섬","Tier 3"],
+  ["JE","Jersey","저지 섬","Tier 3"],
+  ["GF","French Guiana","프랑스령 기아나","Tier 3"],
+  ["KY","Cayman Islands","케이맨 제도","Tier 3"],
+  ["VG","British Virgin Islands","영국령 버진아일랜드","Tier 3"],
+  ["DM","Dominica","도미니카 연방","Tier 3"],
+  ["AX","Åland Islands","올란드 제도","Tier 3"],
+  ["CX","Christmas Island","크리스마스섬","Tier 3"],
+  ["SM","San Marino","산마리노","Tier 3"],
+  ["MH","Marshall Islands","마셜 제도","Tier 3"],
+  ["GI","Gibraltar","지브롤터","Tier 3"],
+  ["MOW","Moscow","모스크바","Tier 3"],
+  ["NF","Norfolk Island","노퍽섬","Tier 3"],
+  ["RE","Reunion","레위니옹","Tier 3"],
+  ["MQ","Martinique","마르티니크","Tier 3"],
+  ["SC","Seychelles","세이셸","Tier 3"],
+  ["PF","French Polynesia","프랑스령 폴리네시아","Tier 3"],
+  ["VI","U.S. Virgin Islands","미국령 버진아일랜드","Tier 3"],
+  ["AW","Aruba","아루바","Tier 3"],
+  ["MP","Northern Mariana Islands","북마리아나 제도","Tier 3"],
+  ["VC","Saint Vincent and the Grenadines","세인트빈센트 그레나딘","Tier 3"],
+  ["AG","Antigua and Barbuda","앤티가 바부다","Tier 3"],
+  ["FO","Faroe Islands","페로 제도","Tier 3"],
+  ["LI","Liechtenstein","리히텐슈타인","Tier 3"],
+  ["YT","Mayotte","마요트","Tier 3"],
+  ["AI","Anguilla","앵귈라","Tier 3"],
+  ["SZ","Eswatini","에스와티니","Tier 3"],
+  ["GL","Greenland","그린란드","Tier 3"],
+  ["GW","Guinea-Bissau","기니비사우","Tier 3"],
+  ["SB","Solomon Islands","솔로몬 제도","Tier 3"],
+  ["SL","Sierra Leone","시에라리온","Tier 3"],
+  ["TG","Togo","토고","Tier 3"],
+  ["GD","Grenada","그레나다","Tier 3"],
+  ["GG","Guernsey","건지 섬","Tier 3"],
+  ["NC","New Caledonia","뉴칼레도니아","Tier 3"],
+  ["BQ","Bonaire, Sint Eustatius, Saba","보네르, 신트외스타티위스, 사바","Tier 3"],
+  ["CK","Cook Islands","쿡 제도","Tier 3"],
+  ["WS","Samoa","사모아","Tier 3"],
+  ["TL","Timor-Leste","동티모르","Tier 3"],
+  ["IO","British Indian Ocean Territory","영국령 인도양 지역","Tier 3"],
+  ["GQ","Equatorial Guinea","적도 기니","Tier 3"],
+  ["FM","Micronesia","미크로네시아","Tier 3"],
+  ["ST","Sao Tome and Principe","상투메 프린시페","Tier 3"],
+  ["MF","Saint Martin","생마르탱","Tier 3"],
+  ["NR","Nauru","나우루","Tier 3"],
+  ["VU","Vanuatu","바누아투","Tier 3"],
+  ["MS","Montserrat","몬트세랫","Tier 3"],
+  ["KI","Kiribati","키리바시","Tier 3"],
+  ["PW","Palau","팔라우","Tier 3"],
+  ["TO","Tonga","통가","Tier 3"],
+  ["TM","Turkmenistan","투르크메니스탄","Tier 3"],
+  ["AQ","Antarctica","남극","Tier 3"],
+  ["SJ","Svalbard and Jan Mayen","스발바르 얀마옌 제도","Tier 3"],
+  ["ER","Eritrea","에리트레아","Tier 3"],
+  ["TV","Tuvalu","투발루","Tier 3"],
+  ["JO","Jordan","요르단","Tier 3"],
+  ["GP","Guadeloupe","과들루프","Tier 3"],
+  ["CW","Curaçao","퀴라소","Tier 3"],
+  ["SX","Sint Maarten","신트마르턴","Tier 3"],
+  ["KN","Saint Kitts and Nevis","세인트키츠 네비스","Tier 3"],
+  ["TC","Turks and Caicos Islands","터크스 케이커스 제도","Tier 3"],
+  ["FK","Falkland Islands","포클랜드 제도","Tier 3"],
+  ["VA","Vatican City","바티칸 시국","Tier 3"],
+  ["PM","Saint Pierre and Miquelon","생피에르 미클롱","Tier 3"],
+  ["WF","Wallis and Futuna","왈리스 푸투나","Tier 3"],
+  ["BL","Saint Barthelemy","생바르텔레미","Tier 3"],
+  ["XK","Kosovo","코소보","Tier 3"],
+  ["MK","North Macedonia","북마케도니아","Tier 3"],
+  ["CI","Ivory Coast","코트디부아르","Tier 3"],
+  ["SD","Sudan","수단","Tier 3"],
+  ["SS","South Sudan","남수단","Tier 3"],
+  ["EH","Western Sahara","서사하라","Tier 3"],
+  ["CD","Democratic Republic of the Congo","콩고 민주 공화국","Tier 3"],
+  ["MZ","Mozambique","모잠비크","Tier 3"],
+  ["GU","Guam","괌","Tier 3"],
+  ["SH","St Helena, Ascension and Tristan da Cunha","세인트헬레나 어센션 트리스탄다쿠냐","Tier 3"],
+  ["NU","Niue","니우에","Tier 3"],
+  ["PN","Pitcairn Islands","핏케언 제도","Tier 3"],
+  ["TK","Tokelau","토켈라우","Tier 3"],
+];
+
+// Deduplicate by code+english name
+const seen = new Set();
+const data = rawData.filter(r => {
+  const key = r[0] + '|' + r[1];
+  if (seen.has(key)) return false;
+  seen.add(key);
+  return true;
+});
+
+function tierNum(t) { return parseInt(t.replace('Tier ', '')); }
+
+// Count unique country codes per tier
+const tierCodes = { 1: new Set(), 2: new Set(), 3: new Set() };
+data.forEach(r => tierCodes[tierNum(r[3])].add(r[0]));
+document.getElementById('t1Count').textContent = tierCodes[1].size;
+document.getElementById('t2Count').textContent = tierCodes[2].size;
+document.getElementById('t3Count').textContent = tierCodes[3].size;
+const allCodes = new Set([...tierCodes[1], ...tierCodes[2], ...tierCodes[3]]);
+document.getElementById('totalCountries').textContent = allCodes.size;
+
+let currentFilter = 'all';
+let currentSort = { col: 'tier', asc: true };
+let searchTerm = '';
+
+function renderTable() {
+  let filtered = data.filter(r => {
+    if (currentFilter !== 'all' && tierNum(r[3]) !== parseInt(currentFilter)) return false;
+    if (searchTerm) {
+      const s = searchTerm.toLowerCase();
+      return r[0].toLowerCase().includes(s) || r[1].toLowerCase().includes(s) || r[2].includes(searchTerm);
+    }
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    let va, vb;
+    switch (currentSort.col) {
+      case 'code': va = a[0]; vb = b[0]; break;
+      case 'en': va = a[1]; vb = b[1]; break;
+      case 'kr': va = a[2]; vb = b[2]; break;
+      case 'tier': va = tierNum(a[3]); vb = tierNum(b[3]); break;
+    }
+    if (currentSort.col === 'tier') {
+      const diff = currentSort.asc ? va - vb : vb - va;
+      return diff !== 0 ? diff : a[1].localeCompare(b[1]);
+    }
+    const cmp = String(va).localeCompare(String(vb));
+    return currentSort.asc ? cmp : -cmp;
+  });
+
+  const tbody = document.getElementById('tableBody');
+  const noResults = document.getElementById('noResults');
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    noResults.style.display = 'block';
+    return;
+  }
+  noResults.style.display = 'none';
+
+  tbody.innerHTML = filtered.map(r => {
+    const tn = tierNum(r[3]);
+    const tc = 't' + tn;
+    const isChanged = r[4] === 'changed';
+    const changedBadge = isChanged ? '<span class="changed-badge">T2→T1</span>' : '';
+    return `<tr class="${isChanged ? 'changed' : ''}">
+      <td class="code">${r[0]}</td>
+      <td class="hide-mobile">${r[1]}</td>
+      <td>${r[2]}</td>
+      <td><span class="tier-badge ${tc}"><span class="dot"></span>Tier ${tn}</span>${changedBadge}</td>
+    </tr>`;
+  }).join('');
+}
+
+// Filter buttons
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.tier;
+    renderTable();
+  });
+});
+
+// Search
+document.getElementById('searchInput').addEventListener('input', e => {
+  searchTerm = e.target.value.trim();
+  renderTable();
+});
+
+// Sort
+document.querySelectorAll('thead th').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.col;
+    if (currentSort.col === col) {
+      currentSort.asc = !currentSort.asc;
+    } else {
+      currentSort = { col, asc: true };
+    }
+    document.querySelectorAll('thead th').forEach(t => {
+      t.classList.remove('sorted');
+      t.querySelector('.sort-icon').textContent = '▲';
+    });
+    th.classList.add('sorted');
+    th.querySelector('.sort-icon').textContent = currentSort.asc ? '▲' : '▼';
+    renderTable();
+  });
+});
+
+renderTable();
+</script>
+</body>
+</html>
