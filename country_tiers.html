@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -109,6 +110,15 @@
   }
   .remark-none { display:inline-block; padding:3px 10px; font-size:0.75rem; color:var(--text-dim); opacity:0.35; }
 
+  .cbadge {
+    display:inline-block; margin-left:6px; padding:1px 7px; border-radius:4px; font-size:0.62rem; font-weight:600;
+    background:rgba(80,220,120,0.15); color:#50dc78; border:1px solid rgba(80,220,120,0.3);
+    letter-spacing:0.3px; vertical-align:middle;
+  }
+  tbody tr.changed { background:rgba(80,220,120,0.04); }
+  tbody tr.changed:hover { background:rgba(80,220,120,0.08); }
+  tbody tr.changed td:first-child { border-left:3px solid var(--mkt-target); }
+
   .no-results { text-align:center; padding:60px 20px; color:var(--text-dim); font-size:0.95rem; }
 
   @media (max-width:700px) {
@@ -189,16 +199,16 @@ const D=[
 ["KW","Kuwait","쿠웨이트","Tier 2","e"],
 ["LV","Latvia","라트비아","Tier 2","e"],
 ["LT","Lithuania","리투아니아","Tier 2","e"],
-["TW","Taiwan","대만","Tier 1","e"],
+["TW","Taiwan","대만","Tier 1","e","3/13 T2→T1"],
 ["IN","India","인도","Tier 3","e"],
 ["AU","Australia","호주","Tier 1","t"],
 ["CA","Canada","캐나다","Tier 1","t"],
 ["NZ","New Zealand","뉴질랜드","Tier 1","t"],
 ["GB","United Kingdom","영국","Tier 1","t"],
 ["US","United States","미국","Tier 1","t"],
-["SG","Singapore","싱가포르","Tier 1","t"],
-["IT","Italy","이탈리아","Tier 1","t"],
-["HK","Hong Kong","홍콩","Tier 1","t"],
+["SG","Singapore","싱가포르","Tier 1","t","3/13 T2→T1"],
+["IT","Italy","이탈리아","Tier 1","t","3/13 T2→T1"],
+["HK","Hong Kong","홍콩","Tier 1","t","3/13 T2→T1"],
 ["AU","Australia","오스트레일리아","Tier 1","t"],
 ["NZ","New Zealand","뉴질란드","Tier 1","t"],
 ["ID","Indonesia","인도네시아","Tier 2","t"],
@@ -506,12 +516,14 @@ function render(){
   if(!f.length){tb.innerHTML='';nr.style.display='block';return;}
   nr.style.display='none';
   tb.innerHTML=f.map(r=>{
-    const t=tn(r[3]),tcl='t'+t,rm=r[4];
+    const t=tn(r[3]),tcl='t'+t,rm=r[4],chg=r[5]||'';
     let rmHtml;
     if(rm==='t') rmHtml='<span class="remark-mkt">◎ 마케팅 주요 타겟</span>';
     else if(rm==='e') rmHtml='<span class="remark-exc">✕ 마케팅 제외 타겟</span>';
     else rmHtml='<span class="remark-none">—</span>';
-    return`<tr><td class="code">${r[0]}</td><td class="hide-m">${r[1]}</td><td>${r[2]}</td><td><span class="tier-badge ${tcl}"><span class="dot"></span>Tier ${t}</span></td><td>${rmHtml}</td></tr>`;
+    const cbHtml=chg?`<span class="cbadge">${chg}</span>`:'';
+    const cls=chg?'changed':'';
+    return`<tr class="${cls}"><td class="code">${r[0]}</td><td class="hide-m">${r[1]}</td><td>${r[2]}</td><td><span class="tier-badge ${tcl}"><span class="dot"></span>Tier ${t}</span>${cbHtml}</td><td>${rmHtml}</td></tr>`;
   }).join('');
 }
 document.querySelectorAll('.fbtn').forEach(b=>{b.addEventListener('click',()=>{
